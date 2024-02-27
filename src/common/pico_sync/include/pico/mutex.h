@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _PLATFORM_MUTEX_H
-#define _PLATFORM_MUTEX_H
+#ifndef _PICO_MUTEX_H
+#define _PICO_MUTEX_H
 
 #include "pico/lock_core.h"
 
@@ -20,7 +20,7 @@ extern "C" {
  *
  * Mutexes are application level locks usually used protecting data structures that might be used by
  * multiple threads of execution. Unlike critical sections, the mutex protected code is not necessarily
- * required/expected to complete quickly, as no other sytem wide locks are held on account of an acquired mutex.
+ * required/expected to complete quickly, as no other system wide locks are held on account of an acquired mutex.
  *
  * When acquired, the mutex has an owner (see \ref lock_get_caller_owner_id) which with the plain SDK is just
  * the acquiring core, but in an RTOS it could be a task, or an IRQ handler context.
@@ -113,6 +113,20 @@ void recursive_mutex_enter_blocking(recursive_mutex_t *mtx);
  * \return true if mutex now owned, false otherwise
  */
 bool mutex_try_enter(mutex_t *mtx, uint32_t *owner_out);
+
+/*! \brief Attempt to take ownership of a mutex until the specified time
+ *  \ingroup mutex
+ *
+ * If the mutex wasn't owned, this method will immediately claim the mutex for the caller and return true.
+ * If the mutex is owned by the caller, this method will immediately return false,
+ * If the mutex is owned by someone else, this method will try to claim it until the specified time, returning
+ * true if it succeeds, or false on timeout
+ *
+ * \param mtx Pointer to mutex structure
+ * \param until The time after which to return if the caller cannot be granted ownership of the mutex
+ * \return true if mutex now owned, false otherwise
+ */
+bool mutex_try_enter_block_until(mutex_t *mtx, absolute_time_t until);
 
 /*! \brief Attempt to take ownership of a recursive mutex
  *  \ingroup mutex

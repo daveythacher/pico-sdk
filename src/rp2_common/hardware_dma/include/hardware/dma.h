@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _HARDWARE_DMA_H_
-#define _HARDWARE_DMA_H_
+#ifndef _HARDWARE_DMA_H
+#define _HARDWARE_DMA_H
 
 #include "pico.h"
 #include "hardware/structs/dma.h"
@@ -157,7 +157,6 @@ static inline void channel_config_set_read_increment(dma_channel_config *c, bool
  * \param c Pointer to channel configuration object
  * \param incr True to enable write address increments, if false, each write will be to the same address
  *             Usually disabled for memory to peripheral transfers
- * Usually disabled for memory to peripheral transfers
  */
 static inline void channel_config_set_write_increment(dma_channel_config *c, bool incr) {
     c->ctrl = incr ? (c->ctrl | DMA_CH0_CTRL_TRIG_INCR_WRITE_BITS) : (c->ctrl & ~DMA_CH0_CTRL_TRIG_INCR_WRITE_BITS);
@@ -891,6 +890,25 @@ static inline uint dma_get_timer_dreq(uint timer_num) {
     check_dma_timer_param(timer_num);
     return DREQ_DMA_TIMER0 + timer_num;
 }
+
+/*! \brief Performs DMA channel cleanup after use
+ *  \ingroup hardware_dma
+ *
+ * This can be used to cleanup dma channels when they're no longer needed, such that they are in a clean state for reuse.
+ * IRQ's for the channel are disabled, any in flight-transfer is aborted and any outstanding interrupts are cleared.
+ * The channel is then clear to be reused for other purposes.
+ *
+ * \code
+ * if (dma_channel >= 0) {
+ *     dma_channel_cleanup(dma_channel);
+ *     dma_channel_unclaim(dma_channel);
+ *     dma_channel = -1;
+ * }
+ * \endcode
+ *
+ * \param channel DMA channel
+ */
+void dma_channel_cleanup(uint channel);
 
 #ifndef NDEBUG
 void print_dma_ctrl(dma_channel_hw_t *channel);

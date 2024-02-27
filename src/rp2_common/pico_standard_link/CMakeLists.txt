@@ -1,5 +1,5 @@
 if (NOT TARGET pico_standard_link)
-    pico_add_impl_library(pico_standard_link)
+    pico_add_library(pico_standard_link)
 
     target_sources(pico_standard_link INTERFACE
         ${CMAKE_CURRENT_LIST_DIR}/crt0.S
@@ -10,11 +10,12 @@ if (NOT TARGET pico_standard_link)
     pico_add_map_output(pico_standard_link)
 
     # todo revisit when we do Clang
-    if (CMAKE_C_COMPILER_ID STREQUAL "Clang")
-        target_link_options(pico_standard_link INTERFACE "LINKER:-nostdlib")
+    if (PICO_C_COMPILER_IS_CLANG)
+#        target_link_options(pico_standard_link INTERFACE "LINKER:-fuse-ld=lld")
     endif ()
 
-    target_link_libraries(pico_standard_link INTERFACE hardware_regs boot_stage2_headers pico_bootrom pico_binary_info pico_cxx_options)
+    pico_mirrored_target_link_libraries(pico_standard_link INTERFACE hardware_regs pico_bootrom pico_binary_info)
+    target_link_libraries(pico_standard_link INTERFACE pico_cxx_options  boot_stage2_headers)
 
     function(pico_add_link_depend TARGET dependency)
         get_target_property(target_type ${TARGET} TYPE)
@@ -73,7 +74,7 @@ if (NOT TARGET pico_standard_link)
         target_compile_definitions(pico_standard_link INTERFACE PICO_DEOPTIMIZED_DEBUG=1)
     endif()
 
-    # todo revisit/recall reasoning for why not -nostartfiles always?
+    # this (arguably wrong) code is restored for 1.5.1 as setting -nostartfiles on many C++ binaries causes link errors. see issue #1368
     # -nostartfiles will be added if PICO_NO_FLASH would be defined to 1
     target_link_options(pico_standard_link INTERFACE $<$<IF:$<STREQUAL:$<TARGET_PROPERTY:PICO_TARGET_BINARY_TYPE>,no_flash>,1,$<AND:$<BOOL:${PICO_NO_FLASH}>,$<STREQUAL:,$<TARGET_PROPERTY:PICO_TARGET_BINARY_TYPE>>>>:-nostartfiles>)
     # boot_stage2 will be linked if PICO_NO_FLASH would be defined to 0
@@ -93,5 +94,22 @@ if (NOT TARGET pico_standard_link)
     if (NOT PICO_NO_GC_SECTIONS)
         target_compile_options(pico_standard_link INTERFACE -ffunction-sections -fdata-sections)
         target_link_options(pico_standard_link INTERFACE "LINKER:--gc-sections")
+    endif()
+
+    if (PICO_C_COMPILER_IS_GNU)
+        # Ignore warnings about rwx segments introduced in binutils 2.39
+        execute_process(COMMAND ${CMAKE_C_COMPILER} -print-prog-name=ld RESULT_VARIABLE RUN_C_RESULT OUTPUT_VARIABLE FULL_LD_PATH
+            OUTPUT_STRIP_TRAILING_WHITESPACE)
+        if (${RUN_C_RESULT} EQUAL 0)
+            execute_process(COMMAND ${FULL_LD_PATH} --help RESULT_VARIABLE RUN_LD_RESULT OUTPUT_VARIABLE LD_HELP_OUTPUT
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+            if (${RUN_LD_RESULT} EQUAL 0)
+                    set(RWX_WARNING "no-warn-rwx-segments")
+                    string(FIND "${LD_HELP_OUTPUT}" "${RWX_WARNING}" LD_RWX_WARNING_SUPPORTED)
+                    if (${LD_RWX_WARNING_SUPPORTED} GREATER -1)
+                        target_link_options(pico_standard_link INTERFACE "LINKER:--${RWX_WARNING}")
+                    endif()
+            endif()
+        endif()
     endif()
 endif()

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.13...3.27)
 
 # Note: this CMakeLists.txt can be used as a top-level CMakeLists.txt for the SDK itself. For all other uses
 # it is included as a subdirectory via the pico_sdk_init() method provided by pico_sdk_init.cmake
@@ -8,6 +8,13 @@ if (NOT TARGET _pico_sdk_inclusion_marker)
     include(pico_sdk_init.cmake)
 
     project(pico_sdk C CXX ASM)
+
+    string(REGEX MATCH "Clang" PICO_C_COMPILER_IS_CLANG "${CMAKE_C_COMPILER_ID}")
+    string(REGEX MATCH "GNU" PICO_C_COMPILER_IS_GNU "${CMAKE_C_COMPILER_ID}")
+    string(REGEX MATCH "IAR" PICO_C_COMPILER_IS_IAR "${CMAKE_C_COMPILER_ID}")
+    pico_register_common_scope_var(PICO_C_COMPILER_IS_CLANG)
+    pico_register_common_scope_var(PICO_C_COMPILER_IS_GNU)
+    pico_register_common_scope_var(PICO_C_COMPILER_IS_IAR)
 
     message("Build type is ${CMAKE_BUILD_TYPE}")
     if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
@@ -54,4 +61,3 @@ if (NOT TARGET _pico_sdk_inclusion_marker)
         pico_promote_common_scope_vars()
     endif()
 endif()
-

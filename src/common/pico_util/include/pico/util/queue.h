@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#ifndef _UTIL_QUEUE_H
-#define _UTIL_QUEUE_H
+#ifndef _PICO_UTIL_QUEUE_H
+#define _PICO_UTIL_QUEUE_H
 
 #include "pico.h"
 #include "hardware/sync.h"
@@ -59,7 +59,7 @@ void queue_init_with_spinlock(queue_t *q, uint element_size, uint element_count,
  * \param element_count Maximum number of entries in the queue
  */
 static inline void queue_init(queue_t *q, uint element_size, uint element_count) {
-    return queue_init_with_spinlock(q, element_size, element_count, next_striped_spin_lock_num());
+    queue_init_with_spinlock(q, element_size, element_count, next_striped_spin_lock_num());
 }
 
 /*! \brief Destroy the specified queue.

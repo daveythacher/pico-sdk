@@ -96,8 +96,13 @@ SECTIONS
     . = ALIGN(4);
 
     /* Vector table goes first in RAM, to avoid large alignment hole */
-   .ram_vector_table (COPY): {
+    .ram_vector_table (NOLOAD): {
         *(.ram_vector_table)
+    } > RAM
+
+    .uninitialized_data (NOLOAD): {
+        . = ALIGN(4);
+        *(.uninitialized_data*)
     } > RAM
 
     .text : {
@@ -123,7 +128,7 @@ SECTIONS
         __ram_text_end__ = .;
     } > RAM AT> FLASH
     __ram_text_source__ = LOADADDR(.text);
-
+    . = ALIGN(4);
 
     .data : {
         __data_start__ = .;
@@ -172,13 +177,8 @@ SECTIONS
         /* All data end */
         __data_end__ = .;
     } > RAM AT> FLASH
-    /* __etext is the name of the .data init source pointer (...) */
+    /* __etext is (for backwards compatibility) the name of the .data init source pointer (...) */
     __etext = LOADADDR(.data);
-
-    .uninitialized_data (COPY): {
-        . = ALIGN(4);
-        *(.uninitialized_data*)
-    } > RAM
 
     /* Start and end symbols must be word-aligned */
     .scratch_x : {
@@ -206,11 +206,11 @@ SECTIONS
         __bss_end__ = .;
     } > RAM
 
-    .heap (COPY):
+    .heap (NOLOAD):
     {
         __end__ = .;
         end = __end__;
-        *(.heap*)
+        KEEP(*(.heap*))
         __HeapLimit = .;
     } > RAM
 
@@ -223,13 +223,13 @@ SECTIONS
     /* by default we put core 0 stack at the end of scratch Y, so that if core 1
      * stack is not used then all of SCRATCH_X is free.
      */
-    .stack1_dummy (COPY):
+    .stack1_dummy (NOLOAD):
     {
         *(.stack1*)
     } > SCRATCH_X
-    .stack_dummy (COPY):
+    .stack_dummy (NOLOAD):
     {
-        *(.stack*)
+        KEEP(*(.stack*))
     } > SCRATCH_Y
 
     .flash_end : {

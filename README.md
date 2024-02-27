@@ -22,6 +22,9 @@ See [Getting Started with the Raspberry Pi Pico](https://rptl.io/pico-get-starte
 hardware, IDE/environment and for how to build and debug software for the Raspberry Pi Pico
 and other RP2040-based devices.
 
+See [Connecting to the Internet with Raspberry Pi Pico W](https://rptl.io/picow-connect) to learn more about writing
+applications for your Raspberry Pi Pico W that connect to the internet.
+
 See [Raspberry Pi Pico C/C++ SDK](https://rptl.io/pico-c-sdk) to learn more about programming using the
 SDK, to explore more advanced features, and for complete PDF-based API documentation.
 
@@ -30,6 +33,12 @@ See [Online Raspberry Pi Pico SDK API docs](https://rptl.io/pico-doxygen) for HT
 # Example code
 
 See [pico-examples](https://github.com/raspberrypi/pico-examples) for example code you can build.
+
+# Getting the latest SDK code
+
+The [master](https://github.com/raspberrypi/pico-sdk/tree/master/) branch of `pico-sdk` on GitHub contains the 
+_latest stable release_ of the SDK. If you need or want to test upcoming features, you can try the
+[develop](https://github.com/raspberrypi/pico-sdk/tree/develop/) branch instead.
 
 # Quick-start your own project
 
@@ -50,7 +59,7 @@ instructions for other platforms, and just in general, we recommend you see [Ras
       3. Setup a `CMakeLists.txt` like:
 
           ```cmake
-          cmake_minimum_required(VERSION 3.13)
+          cmake_minimum_required(VERSION 3.13...3.27)
 
           # initialize the SDK based on PICO_SDK_PATH
           # note: this must happen before project()
@@ -70,7 +79,7 @@ instructions for other platforms, and just in general, we recommend you see [Ras
       1. Setup a `CMakeLists.txt` like:
 
           ```cmake
-          cmake_minimum_required(VERSION 3.13)
+          cmake_minimum_required(VERSION 3.13...3.27)
 
           # initialize pico-sdk from submodule
           # note: this must happen before project()

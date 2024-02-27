@@ -29,12 +29,15 @@ target_link_libraries(kitchen_sink_libs INTERFACE
     pico_divider
     pico_double
     pico_fix_rp2040_usb_device_enumeration
+    pico_flash
     pico_float
+    pico_i2c_slave
     pico_int64_ops
     pico_malloc
     pico_mem_ops
     pico_multicore
     pico_platform
+    pico_rand
     pico_stdlib
     pico_sync
     pico_time
@@ -78,6 +81,14 @@ target_compile_options(kitchen_sink_options INTERFACE
         #-Wundef
         )
 
+if (PICO_C_COMPILER_IS_CLANG)
+    # todo fix up clang warnings
+    target_compile_options(kitchen_sink_options INTERFACE
+            -Wno-cast-qual
+            -Wno-unused-function
+            -Wno-format)
+endif()
+
 target_compile_definitions(kitchen_sink_libs INTERFACE
         PARAM_ASSERTIONS_ENABLE_ALL=1 # want to check all the assertions for compilation warnings
         PICO_AUDIO_DMA_IRQ=1
@@ -95,6 +106,8 @@ if (COMMAND suppress_tinyusb_warnings)
     # TinyUSB itself, so we have to guard against TinyUSB not being present with the above if
     suppress_tinyusb_warnings()
 endif()
+target_compile_definitions(kitchen_sink_extra_stdio PRIVATE
+        TUD_OPT_RP2040_USB_DEVICE_ENUMERATION_FIX=1)
 if (TARGET pico_lwip)
     set_source_files_properties(
             ${PICO_LWIP_PATH}/src/core/ipv4/ip4_frag.c
@@ -117,6 +130,11 @@ pico_set_binary_type(kitchen_sink_no_flash no_flash)
 target_link_libraries(kitchen_sink_no_flash kitchen_sink_libs kitchen_sink_options)
 pico_add_extra_outputs(kitchen_sink_no_flash)
 
+add_executable(kitchen_sink_blocked_ram ${CMAKE_CURRENT_LIST_DIR}/kitchen_sink.c)
+pico_set_binary_type(kitchen_sink_blocked_ram blocked_ram)
+target_link_libraries(kitchen_sink_blocked_ram kitchen_sink_libs kitchen_sink_options)
+pico_add_extra_outputs(kitchen_sink_blocked_ram)
+
 add_executable(kitchen_sink_cpp ${CMAKE_CURRENT_LIST_DIR}/kitchen_sink_cpp.cpp)
 target_link_libraries(kitchen_sink_cpp kitchen_sink_libs kitchen_sink_options)
 pico_set_program_name(kitchen_sink_cpp "Wombat tentacles CPP")
@@ -129,6 +147,10 @@ if (TARGET pico_cyw43_arch)
     pico_add_extra_outputs(kitchen_sink_lwip_poll)
     target_link_libraries(kitchen_sink_lwip_poll
             pico_cyw43_arch_lwip_poll)
+    if (TARGET pico_btstack)
+        target_link_libraries(kitchen_sink_lwip_poll
+            pico_btstack_ble pico_btstack_classic pico_btstack_cyw43)
+    endif()
     # for lwipopts.h
     target_include_directories(kitchen_sink_lwip_poll PRIVATE
             ${CMAKE_CURRENT_LIST_DIR})
@@ -151,4 +173,8 @@ if (TARGET pico_cyw43_arch)
         target_link_libraries(kitchen_sink_lwip_background pico_mbedtls)
         suppress_mbedtls_warnings()
     endif()
+endif()
+
+if (TARGET pico_btstack_base AND COMMAND suppress_btstack_warnings)
+    suppress_btstack_warnings()
 endif()

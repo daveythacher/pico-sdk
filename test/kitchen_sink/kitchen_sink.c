@@ -33,23 +33,26 @@
 #include "pico/binary_info.h"
 #include "pico/bit_ops.h"
 #include "pico/bootrom.h"
+#if LIB_PICO_CYW43_ARCH
+#include "pico/cyw43_arch.h"
+#endif
 #include "pico/divider.h"
 #include "pico/double.h"
 #include "pico/fix/rp2040_usb_device_enumeration.h"
+#include "pico/flash.h"
 #include "pico/float.h"
 #include "pico/int64_ops.h"
+#include "pico/i2c_slave.h"
 #include "pico/malloc.h"
 #include "pico/multicore.h"
 #include "pico/printf.h"
+#include "pico/rand.h"
 #include "pico/runtime.h"
 #include "pico/stdio.h"
 #include "pico/stdlib.h"
 #include "pico/sync.h"
 #include "pico/time.h"
 #include "pico/unique_id.h"
-#if LIB_PICO_CYW43_ARCH
-#include "pico/cyw43_arch.h"
-#endif
 
 #include "hardware/structs/adc.h"
 #include "hardware/structs/bus_ctrl.h"
@@ -98,9 +101,6 @@ bi_decl(bi_block_device(
                            BINARY_INFO_BLOCK_DEV_FLAG_READ | BINARY_INFO_BLOCK_DEV_FLAG_WRITE |
                                    BINARY_INFO_BLOCK_DEV_FLAG_PT_UNKNOWN));
 
-//#pragma GCC push_options
-//#pragma GCC optimize ("O3")
-
 uint32_t *foo = (uint32_t *) 200;
 
 uint32_t dma_to = 0;
@@ -131,11 +131,14 @@ int main(void) {
     puts("Hello Everything!");
     puts("Hello Everything2!");
 
+    printf("main at %p\n", (void *)main);
+    static uint x[2];
+    printf("x[0] = %p, x[1] = %p\n", x, x+1);
     hard_assert(mutex_try_enter(&mutex, NULL));
     hard_assert(!mutex_try_enter(&mutex, NULL));
     hard_assert(recursive_mutex_try_enter(&recursive_mutex, NULL));
     hard_assert(recursive_mutex_try_enter(&recursive_mutex, NULL));
     // this should compile as we are Cortex M0+
-    __asm volatile("SVC #3");
+    pico_default_asm ("SVC #3");
 
 }
